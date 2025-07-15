@@ -61,99 +61,32 @@ namespace InternalBookingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(booking);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-            return View(booking);
-        }
+                bool hasConflict = _context.Bookings.Any(b =>
+                    b.ResourceId == booking.ResourceId &&
+                    b.Id != booking.Id && // Important for Edit scenarios
+                    booking.StartTime < b.EndTime &&
+                    booking.EndTime > b.StartTime
+                );
 
-        // GET: Bookings/Edit/5
-        public IActionResult Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var booking = _context.Bookings.Find(id);
-            if (booking == null) return NotFound();
-
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-            return View(booking);
-        }
-
-        // POST: Bookings/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ResourceId,StartTime,EndTime,BookedBy,Purpose,IsCancelled")] Booking booking)
-        {
-            if (id != booking.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                if (hasConflict)
                 {
-                    _context.Update(booking);
+                    ModelState.AddModelError("", "This resource is already booked during the requested time. Please choose another slot or resource.");
+                }
+                else
+                {
+                    _context.Add(booking);
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!BookingExists(booking.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
             }
+
+            // Repopulate dropdown
             ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
             return View(booking);
-        }
 
-        // GET: Bookings/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var booking = await _context.Bookings
-                .Include(b => b.Resource)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            return View(booking);
-        }
-
-        // POST: Bookings/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var booking = await _context.Bookings.FindAsync(id);
-            if (booking != null)
-            {
-                _context.Bookings.Remove(booking);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool BookingExists(int id)
-        {
-            return _context.Bookings.Any(e => e.Id == id);
         }
     }
 }
+
+        
+
