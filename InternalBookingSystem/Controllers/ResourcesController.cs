@@ -58,12 +58,26 @@ namespace InternalBookingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(resource);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(resource);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    // Log the error (optional: use ILogger instead of Console)
+                    Console.WriteLine($"Error saving resource: {ex.Message}");
+
+                    // Add a user-friendly error message
+                    ModelState.AddModelError("", "An error occurred while saving the resource. Please try again.");
+                }
             }
+
+            // If we reach here, something went wrong
             return View(resource);
         }
+
 
         // GET: Resources/Edit/5
         public async Task<IActionResult> Edit(int? id)

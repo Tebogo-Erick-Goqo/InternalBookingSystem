@@ -61,30 +61,41 @@ namespace InternalBookingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                bool hasConflict = _context.Bookings.Any(b =>
-                    b.ResourceId == booking.ResourceId &&
-                    b.Id != booking.Id && // Important for Edit scenarios
-                    booking.StartTime < b.EndTime &&
-                    booking.EndTime > b.StartTime
-                );
+                try
+                {
+                    bool hasConflict = _context.Bookings.Any(b =>
+                        b.ResourceId == booking.ResourceId &&
+                        b.Id != booking.Id &&
+                        booking.StartTime < b.EndTime &&
+                        booking.EndTime > b.StartTime
+                    );
 
-                if (hasConflict)
-                {
-                    ModelState.AddModelError("", "This resource is already booked during the requested time. Please choose another slot or resource.");
+                    if (hasConflict)
+                    {
+                        ModelState.AddModelError("", "This resource is already booked during the requested time. Please choose another slot or resource.");
+                    }
+                    else
+                    {
+                        _context.Add(booking);
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index));
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    _context.Add(booking);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
+                    // Log the error (optional: use logging framework like Serilog or built-in ILogger)
+                    Console.WriteLine($"Error creating booking: {ex.Message}");
+
+                    // Show user-friendly message
+                    ModelState.AddModelError("", "An unexpected error occurred while saving the booking. Please try again later.");
                 }
             }
 
-            // Repopulate dropdown
+            // Always repopulate dropdown
             ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
             return View(booking);
-
         }
+
     }
 }
 
