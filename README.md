@@ -1,6 +1,6 @@
 # Internal Resource Booking System
 
-This is a web application built in **ASP.NET Core** using **Entity Framework Core** and a **SQL Server** (or SQLite) database. The app allows employees to view, add, and book internal resources (like meeting rooms or vehicles) while preventing double-bookings.
+This is a web application built in **ASP.NET Core** using **Entity Framework Core** and a **SQL Server** database. The app allows employees to view, add, and book internal resources (like meeting rooms or vehicles) while preventing double-bookings.
 
 ## 🧑‍💻 Features
 
